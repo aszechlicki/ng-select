@@ -743,9 +743,13 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
         }
         this.open();
         $event.preventDefault();
+        $event.stopPropagation();
     }
 
     private _handleArrowDown($event: KeyboardEvent) {
+        if (!this.isOpen) {
+            return;
+        }
         if (this._nextItemIsTag(+1)) {
             this.itemsList.unmarkItem();
             this._scrollToTag();
@@ -755,6 +759,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
         }
         this.open();
         $event.preventDefault();
+        $event.stopPropagation();
     }
 
     private _handleArrowUp($event: KeyboardEvent) {
@@ -770,6 +775,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
             this._scrollToMarked();
         }
         $event.preventDefault();
+        $event.stopPropagation();
     }
 
     private _nextItemIsTag(nextStep: number): boolean {
