@@ -52,8 +52,11 @@ import { NgSelectConfig } from './config.service';
 
 export const SELECTION_MODEL_FACTORY = new InjectionToken<SelectionModelFactory>('ng-select-selection-model');
 export type DropdownPosition = 'bottom' | 'top' | 'auto';
+export type AutoCorrect = 'off' | 'on';
+export type AutoCapitalize = 'off' | 'on';
 export type AddTagFn = ((term: string) => any | Promise<any>);
 export type CompareWithFn = (a: any, b: any) => boolean;
+export type GroupValueFn = (key: string | object, children: any[]) => string | object;
 
 @Component({
     selector: 'ng-select',
@@ -74,8 +77,6 @@ export type CompareWithFn = (a: any, b: any) => boolean;
 })
 export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, ControlValueAccessor {
 
-    // inputs
-    @Input() items: any[] = [];
     @Input() bindLabel: string;
     @Input() bindValue: string;
     @Input() clearable = true;
@@ -95,19 +96,30 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     @Input() openOnEnter: boolean;
     @Input() maxSelectedItems: number;
     @Input() groupBy: string | Function;
-    @Input() groupValue: Function;
+    @Input() groupValue: GroupValueFn;
     @Input() bufferAmount = 4;
     @Input() virtualScroll: boolean;
     @Input() selectableGroup = false;
     @Input() selectableGroupAsModel = true;
     @Input() searchFn = null;
+    @Input() excludeGroupsFromDefaultSelection = false;
+    @Input() clearOnBackspace = true;
 
     @Input() labelForId = null;
+    @Input() autoCorrect: AutoCorrect = 'off';
+    @Input() autoCapitalize: AutoCapitalize = 'off';
     @Input() @HostBinding('class.ng-select-typeahead') typeahead: Subject<string>;
     @Input() @HostBinding('class.ng-select-multiple') multiple = false;
     @Input() @HostBinding('class.ng-select-taggable') addTag: boolean | AddTagFn = false;
     @Input() @HostBinding('class.ng-select-searchable') searchable = true;
     @Input() @HostBinding('class.ng-select-opened') isOpen = false;
+
+    @Input()
+    get items() { return this._items };
+    set items(value: any[]) {
+        this._itemsAreUsed = true;
+        this._items = value;
+    };
 
     @Input()
     get compareWith() { return this._compareWith; }
@@ -135,7 +147,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     @Output('add') addEvent = new EventEmitter();
     @Output('remove') removeEvent = new EventEmitter();
     @Output('scroll') scroll = new EventEmitter<{ start: number; end: number }>();
-    @Output('scrollToEnd') scrollToEnd = new EventEmitter<{ start: number; end: number }>();
+    @Output('scrollToEnd') scrollToEnd = new EventEmitter();
 
     // custom templates
     @ContentChild(NgOptionTemplateDirective, { read: TemplateRef }) optionTemplate: TemplateRef<any>;
@@ -160,10 +172,11 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     viewPortItems: NgOption[] = [];
     filterValue: string = null;
     dropdownId = newId();
-    selectedItemId = 0;
     element: HTMLElement;
     focused: boolean;
 
+    private _items = [];
+    private _itemsAreUsed: boolean;
     private _defaultLabel = 'label';
     private _primitive = true;
     private _manualOpen: boolean;
@@ -173,7 +186,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
 
     private readonly _destroy$ = new Subject<void>();
     private readonly _keyPress$ = new Subject<string>();
-    private _onChange = (_: NgOption) => { };
+    private _onChange = (_: any) => { };
     private _onTouched = () => { };
 
     clearItem = (item: any) => {
@@ -184,6 +197,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     constructor(
         @Attribute('class') public classes: string,
         @Attribute('tabindex') public tabIndex: string,
+        @Attribute('autofocus') private autoFocus: any,
         config: NgSelectConfig,
         @Inject(SELECTION_MODEL_FACTORY) newSelectionModel: SelectionModelFactory,
         _elementRef: ElementRef,
@@ -219,13 +233,17 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
             this._setItems(changes.items.currentValue || []);
         }
         if (changes.isOpen) {
-            this._manualOpen = true;
+            this._manualOpen = isDefined(changes.isOpen.currentValue);
         }
     }
 
     ngAfterViewInit() {
-        if (this.items && this.items.length === 0) {
+        if (!this._itemsAreUsed) {
             this._setItemsFromNgOptions();
+        }
+
+        if (isDefined(this.autoFocus)) {
+            this.focus();
         }
     }
 
@@ -274,16 +292,17 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
         }
         $event.stopPropagation();
 
-        if (target.className === 'ng-clear') {
+        if (target.classList.contains('ng-clear-wrapper')) {
             this.handleClearClick();
             return;
         }
-        if (target.className === 'ng-arrow-wrapper') {
+
+        if (target.classList.contains('ng-arrow-wrapper')) {
             this.handleArrowClick();
             return;
         }
 
-        if (target.className.includes('ng-value-icon')) {
+        if (target.classList.contains('ng-value-icon')) {
             return;
         }
 
@@ -308,7 +327,8 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
 
     handleClearClick() {
         if (this.hasValue) {
-            this.clearModel();
+            this.itemsList.clearSelected(true);
+            this._updateNgModel();
         }
         this._clearSearch();
         this.focus();
@@ -416,6 +436,10 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     }
 
     unselect(item: NgOption) {
+        if (!item) {
+            return;
+        }
+
         this.itemsList.unselect(item);
         this.focus();
         this._updateNgModel();
@@ -562,7 +586,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
         };
 
         this.ngOptions.changes
-            .pipe(startWith(this.ngOptions), takeUntil(this._destroy$), filter((items: QueryList<any>) => !!items.length))
+            .pipe(startWith(this.ngOptions), takeUntil(this._destroy$))
             .subscribe(options => {
                 this.bindLabel = this._defaultLabel;
                 handleNgOptions(options);
@@ -654,13 +678,13 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
         const model = [];
         for (const item of this.selectedItems) {
             if (this.bindValue) {
-                let resolvedValue = null;
+                let value = null;
                 if (item.children) {
-                    resolvedValue = item.value[<string>this.groupBy];
+                    value = item.value[<string>this.groupBy];
                 } else {
-                    resolvedValue = this.itemsList.resolveNested(item.value, this.bindValue);
+                    value = this.itemsList.resolveNested(item.value, this.bindValue);
                 }
-                model.push(resolvedValue);
+                model.push(value);
             } else {
                 model.push(item.value);
             }
@@ -780,12 +804,12 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     }
 
     private _handleBackspace() {
-        if (this.filterValue || !this.clearable || !this.hasValue) {
+        if (this.filterValue || !this.clearable || !this.clearOnBackspace || !this.hasValue) {
             return;
         }
 
         if (this.multiple) {
-            this.unselect(this.itemsList.lastSelectedItem)
+            this.unselect(this.itemsList.lastSelectedItem);
         } else {
             this.clearModel();
         }
