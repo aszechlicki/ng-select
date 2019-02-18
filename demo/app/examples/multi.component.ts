@@ -41,6 +41,21 @@ import { DataService } from '../shared/data.service';
         ---
         <hr/>
 
+        <label>Keep selected elements on backspace</label>
+        ---html,true
+        <ng-select
+                [items]="people$1 | async"
+                [multiple]="true"
+                [closeOnSelect]="false"
+                [clearOnBackspace]="false"
+                bindLabel="name"
+                placeholder="Select people"
+                [(ngModel)]="selectedPeople5">
+        </ng-select>
+        ---
+        <hr/>
+
+
         <label>Select multiple elements with a limit number of selections (e.g 3)</label>
         ---html,true
         <div class="alert alert-warning mb-2" *ngIf="selectedPeople2.length === 3 && select.focused">
@@ -76,6 +91,7 @@ import { DataService } from '../shared/data.service';
         ---
         <br>
         <button class="btn btn-secondary btn-sm" (click)="disable = !disable">Toggle disabled</button>
+        <button class="btn btn-secondary btn-sm" (click)="toggleModel()">Toggle model</button>
         <hr/>
         <label>Custom template for each selected item</label>
         ---html,true
@@ -128,6 +144,7 @@ export class SelectMultiComponent {
 
     people$3: Observable<any[]>;
     selectedPeople3 = [];
+    selectedPeople5 = [];
     selectedPeople4 = [];
     disable = true;
 
@@ -143,10 +160,7 @@ export class SelectMultiComponent {
         this.people$3 = this.dataService.getPeople();
         this.githubUsers$ = this.dataService.getGithubAccounts('anjm');
 
-        this.selectedPeople3 = [
-            { id: '5a15b13c2340978ec3d2c0ea', name: 'Rochelle Estes', disabled: true },
-            { id: '5a15b13c728cd3f43cc0fe8a', name: 'Marquez Nolan', disabled: true }
-        ];
+        this.setSelectedPeople3();
     }
 
     clearModel1() {
@@ -161,6 +175,21 @@ export class SelectMultiComponent {
         this.selectedPeople2 = [];
     }
 
+    toggleModel() {
+        if (this.selectedPeople3.length > 0) {
+            this.selectedPeople3 = [];
+        } else {
+            this.setSelectedPeople3();
+        }
+    }
+
+    setSelectedPeople3() {
+        this.selectedPeople3 = [
+            { id: '5a15b13c2340978ec3d2c0ea', name: 'Rochelle Estes', disabled: true },
+            { id: '5a15b13c663ea0af9ad0dae8', name: 'Mendoza Ruiz' },
+            { id: '5a15b13c728cd3f43cc0fe8a', name: 'Marquez Nolan', disabled: true }
+        ];
+    }
 }
 
 

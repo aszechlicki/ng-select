@@ -24,9 +24,11 @@
         <div class="ng-input">
             <input #filterInput
                    type="text"
-                   autocomplete="{{dropdownId}}"
+                   [attr.autocomplete]="labelForId ? 'off' : dropdownId"
                    [attr.id]="labelForId"
                    [attr.tabindex]="tabIndex"
+                   [attr.autocorrect]="autoCorrect"
+                   [attr.autocapitalize]="autoCapitalize"
                    [readOnly]="!searchable"
                    [disabled]="disabled"
                    [value]="filterValue ? filterValue : ''"
@@ -60,6 +62,7 @@
     [position]="dropdownPosition"
     [headerTemplate]="headerTemplate"
     [footerTemplate]="footerTemplate"
+    [filterValue]="filterValue"
     [items]="itemsList.filteredItems"
     [markedItem]="itemsList.markedItem"
     (update)="viewPortItems = $event"
@@ -67,7 +70,7 @@
     (scrollToEnd)="scrollToEnd.emit($event)"
     (outsideClick)="close()"
     [class.ng-select-multiple]="multiple"
-    [ngClass]="classes"
+    [ngClass]="appendTo ? classes : null"
     [id]="dropdownId">
 
     <ng-container>
@@ -79,6 +82,7 @@
                 [class.ng-option]="!item.children"
                 [class.ng-option-child]="!!item.parent"
                 [class.ng-option-marked]="item === itemsList.markedItem"
+                [attr.aria-selected]="item.selected"
                 [attr.id]="item?.htmlId">
 
             <ng-template #defaultOptionTemplate>
@@ -131,7 +135,7 @@
 
         <ng-template
             [ngTemplateOutlet]="loadingTextTemplate || defaultLoadingTextTemplate"
-            [ngTemplateOutletContext]="{ searchTerm: filterValue  }">
+            [ngTemplateOutletContext]="{ searchTerm: filterValue }">
         </ng-template>
     </ng-container>
 
