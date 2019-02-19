@@ -12,8 +12,8 @@ import { Observable } from 'rxjs';
             observable when using angular <b> | async</b> pipe
         </p>
         ---js
-        people$: Observable<Person[]>;
-        ngOnInit() {
+        people$: Observable{{'<'}}Person[]>;
+        ngOnInit() {{ '{' }}}
             this.people$ = this.dataService.getPeople();
         }
         ---

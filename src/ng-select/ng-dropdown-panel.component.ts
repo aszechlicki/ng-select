@@ -1,23 +1,23 @@
 import {
-    Component,
-    OnDestroy,
-    Renderer2,
-    ElementRef,
-    Input,
-    EventEmitter,
-    Output,
-    ViewChild,
-    SimpleChanges,
-    NgZone,
-    TemplateRef,
-    ViewEncapsulation,
-    ChangeDetectionStrategy,
     AfterContentInit,
-    OnInit,
-    OnChanges,
+    ChangeDetectionStrategy,
+    Component,
+    ElementRef,
+    EventEmitter,
     HostListener,
+    Inject,
+    Input,
+    NgZone,
+    OnChanges,
+    OnDestroy,
+    OnInit,
     Optional,
-    Inject
+    Output,
+    Renderer2,
+    SimpleChanges,
+    TemplateRef,
+    ViewChild,
+    ViewEncapsulation
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
@@ -26,7 +26,7 @@ import { DropdownPosition } from './ng-select.component';
 import { WindowService } from './window.service';
 import { VirtualScrollService } from './virtual-scroll.service';
 import { takeUntil } from 'rxjs/operators';
-import { Subject, fromEvent, merge } from 'rxjs';
+import { fromEvent, merge, Subject } from 'rxjs';
 
 const TOP_CSS_CLASS = 'ng-select-top';
 const BOTTOM_CSS_CLASS = 'ng-select-bottom';
@@ -171,6 +171,7 @@ export class NgDropdownPanelComponent implements OnInit, OnChanges, OnDestroy, A
         } else {
             const contentEl: HTMLElement = this.contentElementRef.nativeElement;
             const childrenHeight = Array.from(contentEl.children).slice(0, index).reduce((c, n) => c + n.clientHeight, 0);
+
             scrollEl.scrollTop = childrenHeight - (d.childHeight * Math.min(index, buffer));
         }
     }

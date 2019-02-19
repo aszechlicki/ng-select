@@ -1,5 +1,5 @@
 {
-  "repository": "ng-select/ng-select",
+  "repository": "aszechlicki/ng-select",
   "engines": {
     "node": ">= 6.9.0",
     "npm": ">= 3.0.0"
@@ -83,5 +83,8 @@
     "webpack-cli": "^3.1.0",
     "webpack-dev-server": "^3.1.14",
     "zone.js": "^0.8.26"
+  },
+  "dependencies": {
+    "classlist.js": "^1.1.20150312"
   }
 }

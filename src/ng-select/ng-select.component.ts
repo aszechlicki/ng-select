@@ -388,6 +388,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
             this.focus();
         }
         this.detectChanges();
+        this._scrollToMarked();
     }
 
     close() {
