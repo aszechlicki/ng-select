@@ -21,7 +21,7 @@
                 [ngTemplateOutletContext]="{ items: selectedValues, clear: clearItem }">
         </ng-template>
 
-        <div class="ng-input">
+        <div class="ng-input" [title]="selectedItems[0]?.label">
             <input #filterInput
                    type="text"
                    [attr.autocomplete]="labelForId ? 'off' : dropdownId"
@@ -36,7 +36,6 @@
                    (focus)="onInputFocus($event)"
                    (blur)="onInputBlur($event)"
                    (change)="$event.stopPropagation()"
-                   [title]="filterValue ? filterValue : ''"
                    role="combobox"
                    [attr.aria-expanded]="isOpen"
                    [attr.aria-owns]="isOpen ? dropdownId : null"
