@@ -36,6 +36,7 @@
                    (focus)="onInputFocus($event)"
                    (blur)="onInputBlur($event)"
                    (change)="$event.stopPropagation()"
+                   [title]="filterValue ? filterValue : ''"
                    role="combobox"
                    [attr.aria-expanded]="isOpen"
                    [attr.aria-owns]="isOpen ? dropdownId : null"

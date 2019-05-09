@@ -252,12 +252,12 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
         this._destroy$.complete();
     }
 
-    @HostListener('keydown', ['$event'])
+    @HostListener('document:keydown', ['$event'])
     handleKeyDown($event: KeyboardEvent) {
         if (KeyCode[$event.which]) {
             switch ($event.which) {
                 case KeyCode.ArrowDown:
-                    this._handleArrowDown($event);
+                    return this._handleArrowDown($event);
                     break;
                 case KeyCode.ArrowUp:
                     this._handleArrowUp($event);
@@ -785,6 +785,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
         this.open();
         $event.preventDefault();
         $event.stopPropagation();
+        return false;
     }
 
     private _handleArrowUp($event: KeyboardEvent) {
